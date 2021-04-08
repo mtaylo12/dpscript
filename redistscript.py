@@ -76,12 +76,12 @@ def main():
     edges = ([(int(x.split()[0]), int(x.split()[1])) for x in open(edge_file).readlines()])
     populations = ([int(x.split()[0]) for x in open(population_file).readlines()])
 
-    # create 10% population bounds
-    error_margin = .10
-    minpop = round((1 + error_margin) * list_average(populations))
-    maxpop = round((1 - error_margin) * list_average(populations))
+    # TODO: create 10% population bounds
+    
+    minpop = 150000
+    maxpop = 300000
 
-    # create district bounds
+    # TODO: create district bounds
     mindist = 1
     maxdist = 10
 
