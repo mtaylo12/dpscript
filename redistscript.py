@@ -1,9 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
+import sys
+import os
 import matplotlib.pyplot as plt
 import networkx as nx
-import sys
-import argparse
 
 def createGraph(c, e, p):
     G = nx.Graph()
@@ -16,21 +16,15 @@ def createGraph(c, e, p):
     
     return G
 
+def shell_out(str):
+  r = os.system(str)
+  if r != 0:
+    raise Exception("command failed")
 
-def main():
-    print(sys.argv)
-    assert(len(sys.argv) == 4)
+def list_average(list):
+    return sum(list) / len(list)
 
-    coordinate_file = sys.argv[1]
-    population_file = sys.argv[2]
-    edge_file = sys.argv[3]
-
-    coordinates = ([(int(x.split()[0]),int(x.split()[1])) for x in open(coordinate_file).readlines()])
-    edges = ([(int(x.split()[0]),int(x.split()[1])) for x in open(edge_file).readlines()])
-    populations = ([int(x.split()[0]) for x in open(population_file).readlines()])
-
-    G = createGraph(coordinates, edges, populations)
-    
+def setup_inputs(G):
     original_stdout = sys.stdout # Save a reference to the original standard output
 
     with open('example.co', 'w+') as f, open('examplePops','w+') as p:
@@ -68,10 +62,34 @@ def main():
             if darts[d2_index] == None:
                 darts[d2_index] = d2
 
-        print(*darts, sep = "\n")
-
-            
+        print(*darts, sep = "\n")    
     sys.stdout = original_stdout # Reset the standard output to its original value
+
+def main():
+    assert(len(sys.argv) == 4)
+
+    coordinate_file = sys.argv[1]
+    population_file = sys.argv[2]
+    edge_file = sys.argv[3]
+
+    coordinates = ([(int(x.split()[0]),int(x.split()[1])) for x in open(coordinate_file).readlines()])
+    edges = ([(int(x.split()[0]), int(x.split()[1])) for x in open(edge_file).readlines()])
+    populations = ([int(x.split()[0]) for x in open(population_file).readlines()])
+
+    # create 10% population bounds
+    error_margin = .10
+    minpop = round((1 + error_margin) * list_average(populations))
+    maxpop = round((1 - error_margin) * list_average(populations))
+
+    # create district bounds
+    mindist = 1
+    maxdist = 10
+
+    G = createGraph(coordinates, edges, populations)
+    setup_inputs(G)
+    
+    command = "./redistricting example examplePops exampleDarts " + str(minpop) + " " + str(maxpop) + " " + str(mindist) + " " + str(maxdist)
+    shell_out(command)
 
 if __name__ == '__main__':
     main()
