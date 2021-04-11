@@ -25,48 +25,42 @@ def list_average(list):
     return sum(list) / len(list)
 
 def setup_inputs(G):
-    original_stdout = sys.stdout # Save a reference to the original standard output
+    #TODO: should files be in tmp directory? in separate input folder?
 
-    with open('example.co', 'w+') as f, open('examplePops','w+') as p:
-        # f (.co file): node coordinates (row = node index)
-        # p: populations corresponding to node indices
+    #setup node and pop file
+    node_file = open('graph.co', 'w+') #node coordinates (row = node index)
+    pop_file = open('graphPops','w+') #populations corresponding to node indices
+    for n in G:
+        coords=nx.get_node_attributes(G,'coords')
+        print(coords[n][0], coords[n][1], file=node_file)
 
-        for n in G:
-            # setup .co file
-            sys.stdout = f
-            coords=nx.get_node_attributes(G,'coords')
-            print(coords[n][0], coords[n][1])
+        pop=nx.get_node_attributes(G,'pop')
+        print(pop[n], file=pop_file)
 
-            # setup pop file
-            sys.stdout = p
-            pop=nx.get_node_attributes(G,'pop')
-            print(pop[n])
+    # setup edge and dart file
+    edge_file = open('graph.gr','w+') #row = edge index, values = vertices
+    dart_file = open('graphDarts','w+')
+    darts = [None]*G.number_of_nodes()
+    for i, e in enumerate(G.edges):
+        print(e[0],e[1], file=edge_file)
 
-    with open('example.gr','w+') as g, open('exampleDarts','w+') as d:
-        # g (.gr file): edge descriptions (row = edge index, numbers correspond to vertices)
-        darts = [None]*G.number_of_nodes()
-        for i, e in enumerate(G.edges):
-            # setup edge file
-            sys.stdout = g
-            print(e[0],e[1])
+        d1 = 2*i
+        d2 = 2*i + 1
+        d1_index = e[0]
+        d2_index = e[1]
 
-            # setup dart data
-            sys.stdout = d
-            d1 = 2*i
-            d2 = 2*i + 1
-            d1_index = e[0]
-            d2_index = e[1]
+        if darts[d1_index] == None:
+            darts[d1_index] = d1
+        if darts[d2_index] == None:
+            darts[d2_index] = d2
 
-            if darts[d1_index] == None:
-                darts[d1_index] = d1
-            if darts[d2_index] == None:
-                darts[d2_index] = d2
-
-        print(*darts, sep = "\n")    
-    sys.stdout = original_stdout # Reset the standard output to its original value
+    print(*darts, sep = "\n", file = dart_file)    
+    edge_file.close()
+    dart_file.close()
 
 def main():
     assert(len(sys.argv) == 4)
+
 
     coordinate_file = sys.argv[1]
     population_file = sys.argv[2]
@@ -77,7 +71,6 @@ def main():
     populations = ([int(x.split()[0]) for x in open(population_file).readlines()])
 
     # TODO: create 10% population bounds
-    
     minpop = 150000
     maxpop = 300000
 
@@ -88,7 +81,7 @@ def main():
     G = createGraph(coordinates, edges, populations)
     setup_inputs(G)
     
-    command = "./redistricting example examplePops exampleDarts " + str(minpop) + " " + str(maxpop) + " " + str(mindist) + " " + str(maxdist)
+    command = "./redistricting graph graphPops graphDarts " + str(minpop) + " " + str(maxpop) + " " + str(mindist) + " " + str(maxdist)
     shell_out(command)
 
 if __name__ == '__main__':
