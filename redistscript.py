@@ -4,6 +4,7 @@ import sys
 import os
 import matplotlib.pyplot as plt
 import networkx as nx
+import argparse
 
 def createGraph(c, e, p):
     G = nx.Graph()
@@ -58,13 +59,17 @@ def setup_inputs(G):
     edge_file.close()
     dart_file.close()
 
+def parse():
+    p = argparse.ArgumentParser()
+    p.add_argument("coordfile", help="text file of listed coordinates: [x y]")
+    p.add_argument("popfile", help="text file of listed populations")
+    p.add_argument("edgefile", help="text file of edges with numbered vertices: [vertex1 vertex2]")
+    args = p.parse_args()
+    return args.coordfile, args.popfile, args.edgefile
+
+
 def main():
-    assert(len(sys.argv) == 4)
-
-
-    coordinate_file = sys.argv[1]
-    population_file = sys.argv[2]
-    edge_file = sys.argv[3]
+    [coordinate_file, population_file, edge_file] = parse()
 
     coordinates = ([(int(x.split()[0]),int(x.split()[1])) for x in open(coordinate_file).readlines()])
     edges = ([(int(x.split()[0]), int(x.split()[1])) for x in open(edge_file).readlines()])
