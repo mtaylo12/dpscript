@@ -5,8 +5,10 @@ import os
 import matplotlib.pyplot as plt
 import networkx as nx
 import argparse
+import re
 
-def createGraph(c, e, p):
+
+def graph_from_txt(c, e, p):
     G = nx.Graph()
     G.add_nodes_from(c)
     G = nx.convert_node_labels_to_integers(G, first_label=0, ordering='default', label_attribute='coords')
@@ -26,11 +28,10 @@ def list_average(list):
     return sum(list) / len(list)
 
 def setup_inputs(G):
-    #TODO: should files be in tmp directory? in separate input folder?
 
     #setup node and pop file
-    node_file = open('graph.co', 'w+') #node coordinates (row = node index)
-    pop_file = open('graphPops','w+') #populations corresponding to node indices
+    node_file = open('/tmp/graph.co', 'w+') #node coordinates (row = node index)
+    pop_file = open('/tmp/graphPops','w+') #populations corresponding to node indices
     for n in G:
         coords=nx.get_node_attributes(G,'coords')
         print(coords[n][0], coords[n][1], file=node_file)
@@ -39,8 +40,8 @@ def setup_inputs(G):
         print(pop[n], file=pop_file)
 
     # setup edge and dart file
-    edge_file = open('graph.gr','w+') #row = edge index, values = vertices
-    dart_file = open('graphDarts','w+')
+    edge_file = open('/tmp/graph.gr','w+') #row = edge index, values = vertices
+    dart_file = open('/tmp/graphDarts','w+')
     darts = [None]*G.number_of_nodes()
     for i, e in enumerate(G.edges):
         print(e[0],e[1], file=edge_file)
@@ -67,6 +68,12 @@ def parse():
     args = p.parse_args()
     return args.coordfile, args.popfile, args.edgefile
 
+def graph_cut(G,cut_edges,edges):
+    for i in cut_edges:
+        x = edges[i][0]
+        y = edges[i][1]
+        G.remove_edge(x,y)
+    return G
 
 def main():
     [coordinate_file, population_file, edge_file] = parse()
@@ -83,11 +90,34 @@ def main():
     mindist = 1
     maxdist = 10
 
-    G = createGraph(coordinates, edges, populations)
-    setup_inputs(G)
+    G = graph_from_txt(coordinates, edges, populations)
     
-    command = "./redistricting graph graphPops graphDarts " + str(minpop) + " " + str(maxpop) + " " + str(mindist) + " " + str(maxdist)
-    shell_out(command)
+    # TODO: factor 
+    setup_inputs(G)
 
+    # TODO: check if planar
+    # TODO: extract coords from graph directly
+
+    plt.subplot(121)
+    nx.draw_networkx(G, pos=dict(zip(G.nodes(),coordinates)))
+
+
+    cut_file = open('/tmp/cut_edges.txt','w+')
+    command = "./redistricting /tmp/graph /tmp/graphPops /tmp/graphDarts " + str(minpop) + " " + str(maxpop) + " " + str(mindist) + " " + str(maxdist) + " > /tmp/cut_edges.txt"
+    shell_out(command)
+    
+    
+    cut_edges_str = (cut_file.read().split(","))
+    if (cut_edges_str[-1] == "\n"):
+        cut_edges_str = cut_edges_str[0:-1]
+
+    cut_edges = [int(x) for x in cut_edges_str]
+
+    G_cut = graph_cut(G,cut_edges,edges)
+
+    plt.subplot(122)
+    nx.draw_networkx(G_cut, pos=dict(zip(G_cut.nodes(),coordinates)))
+    plt.show()
+    
 if __name__ == '__main__':
     main()

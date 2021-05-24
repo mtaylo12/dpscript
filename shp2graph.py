@@ -11,9 +11,13 @@ import matplotlib.pyplot as plt
 def graph_from_shp(filename):
     G = nx.Graph()
     data = gp.read_file(filename)
+    # data.plot()
+    # plt.show()
+
     for index, row in data.iterrows():
         xc = row["geometry"].centroid.x
         yc = row["geometry"].centroid.y
+        
         G.add_node(index, coords=(xc,yc))
 
     blocks = fiona.open(filename)

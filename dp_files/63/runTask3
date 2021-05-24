@@ -1,0 +1,3 @@
+#!/bin/bash
+
+/home/cwolfram/planarity2/build/redistricting /home/cwolfram/63/m000572200691 /home/cwolfram/63/m000573200691.txt /home/cwolfram/63/m000574200691.txt 190000 230000 3 3
